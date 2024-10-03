@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+
+<?import javafx.scene.layout.VBox?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.Group?>
+
+<?import com.dlsc.formsfx.view.renderer.GroupRenderer?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.skin.ToolBarSkin.ToolBarOverflowMenu?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<AnchorPane fx:id="root" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="ru.ruslan.spring.cad.MainWindowController" >
+    <BorderPane AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.topAnchor="0" fx:id="borderPane" >
+
+
+        <top>
+
+
+        <ToolBar>
+            <Button text="Файл"/>
+            <Button text="Построить"/>
+            <Button text="Изменить"/>
+        </ToolBar>
+        </top>
+
+        <center >
+
+            <Pane fx:id="canvas" onMouseClicked="#Create" onMouseMoved="#Moved">
+                <HBox>
+                    <Label fx:id="coordX"/>
+                    <Label text="         "/>
+                    <Label fx:id="coordY"/>
+                </HBox>
+
+            </Pane>
+        </center>
+
+    </BorderPane>
+
+
+
+
+</AnchorPane>
+
