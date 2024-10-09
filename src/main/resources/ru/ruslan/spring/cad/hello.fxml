@@ -19,36 +19,38 @@
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import org.controlsfx.control.GridCell?>
 <AnchorPane fx:id="root" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="ru.ruslan.spring.cad.MainWindowController" >
-    <BorderPane AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.topAnchor="0" fx:id="borderPane" >
 
-
-        <top>
-
-
-        <ToolBar>
+    <BorderPane fx:id="borderPane" AnchorPane.leftAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.topAnchor="0" AnchorPane.rightAnchor="0" >
+        <top >
+        <ToolBar prefHeight="50">
             <Button text="Файл"/>
-            <Button text="Построить"/>
+            <MenuButton text="Построить">
+                <items>
+                    <MenuItem text="Линия" onAction="#changeModeToLine"/>
+                    <MenuItem text="Круг" />
+                    <MenuItem text="Прямоугольник" />
+                </items>
+            </MenuButton>
             <Button text="Изменить"/>
+            <Button text="Панорамирование" onAction="#changeModeToPanoram"/>
         </ToolBar>
         </top>
-
         <center >
-
-            <Pane fx:id="canvas" onMouseClicked="#Create" onMouseMoved="#Moved">
+            <Pane fx:id="canvas">
                 <HBox>
+                    <Label text="X: "/>
                     <Label fx:id="coordX"/>
                     <Label text="         "/>
+                    <Label text="Y: "/>
                     <Label fx:id="coordY"/>
                 </HBox>
-
             </Pane>
         </center>
-
     </BorderPane>
-
-
-
-
 </AnchorPane>
 

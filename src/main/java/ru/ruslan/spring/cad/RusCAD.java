@@ -18,8 +18,8 @@ public class RusCAD extends Application {
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/ru/ruslan/spring/cad/hello.fxml"));
         Parent root = loader.load();
-
         MainWindowController controller = loader.getController();
+
 
 
         // Загружаем изображение для курсора
@@ -28,18 +28,20 @@ public class RusCAD extends Application {
         Cursor crosshairCursor = new ImageCursor(crosshairImage,
                 crosshairImage.getWidth() / 2,
                 crosshairImage.getHeight() / 2);
-        stage.setMinHeight(600);
+        stage.setMinHeight(800);
         stage.setMinWidth(800);
 
-        Scene scene = new Scene(root,800,600);
+        Scene scene = new Scene(root,1000,1000);
 
         scene.setCursor(crosshairCursor);
+
         controller.setScene(scene);
-
-
+        controller.setCoordSystem();
         stage.setScene(scene);
         stage.setTitle("RusCAD");
         stage.show();
+
+
     }
 
     public static void main(String[] args) {
