@@ -4,12 +4,10 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.*;
 import javafx.scene.image.Image;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
+import ru.ruslan.spring.cad.Controllers.MainWindowController;
 
 import java.io.IOException;
-import java.util.Objects;
 
 public class RusCAD extends Application {
 
@@ -33,10 +31,11 @@ public class RusCAD extends Application {
 
         Scene scene = new Scene(root,1000,1000);
 
-        scene.setCursor(crosshairCursor);
+
+        //scene.setCursor(crosshairCursor);
 
         controller.setScene(scene);
-        controller.setCoordSystem();
+
         stage.setScene(scene);
         stage.setTitle("RusCAD");
         stage.show();
