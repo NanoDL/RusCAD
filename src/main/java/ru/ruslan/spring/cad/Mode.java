@@ -5,5 +5,5 @@ public enum Mode {
     ZOOM,
     PANORAM,
     DRAW_CIRCLE,
-    DRAW_RECT
+    DIVIDE, DRAW_RECT
 }

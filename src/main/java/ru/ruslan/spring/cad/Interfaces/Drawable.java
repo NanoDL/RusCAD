@@ -1,4 +1,4 @@
-package ru.ruslan.spring.cad;
+package ru.ruslan.spring.cad.Interfaces;
 
 
 import javafx.scene.layout.Pane;

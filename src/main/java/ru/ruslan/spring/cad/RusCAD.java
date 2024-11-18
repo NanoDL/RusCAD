@@ -14,10 +14,9 @@ public class RusCAD extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/ru/ruslan/spring/cad/hello.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/ru/ruslan/spring/cad/MainWindow.fxml"));
         Parent root = loader.load();
         MainWindowController controller = loader.getController();
-
 
 
         // Загружаем изображение для курсора
@@ -32,7 +31,7 @@ public class RusCAD extends Application {
         Scene scene = new Scene(root,1000,1000);
 
 
-        //scene.setCursor(crosshairCursor);
+        scene.setCursor(crosshairCursor);
 
         controller.setScene(scene);
 

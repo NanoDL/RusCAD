@@ -1,4 +1,758 @@
 package ru.ruslan.spring.cad.Controllers;
 
+import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.input.*;
+import javafx.scene.layout.Pane;
+import javafx.stage.WindowEvent;
+import ru.ruslan.spring.cad.Interfaces.Divided;
+import ru.ruslan.spring.cad.Interfaces.Movable;
+import ru.ruslan.spring.cad.Interfaces.Selectable;
+import ru.ruslan.spring.cad.Interfaces.Zoomable;
+import ru.ruslan.spring.cad.Mode;
+import ru.ruslan.spring.cad.Models.*;
+
+import java.util.List;
+
+
 public class CanvasController {
+
+    private final Pane canvas;
+    private final MyPopup popup;
+
+    private Mode mode;
+
+    @FXML
+    private Label coordX;
+    @FXML
+    private Label coordY;
+    @FXML
+    private Label scrCoordX;
+    @FXML
+    private Label scrCoordY;
+    @FXML
+    private Label scaleLabel;
+    @FXML
+    private Label coordModeLabel;
+    @FXML
+    private Label modeLabel;
+
+    private MyLine currentMyLine;
+    private Rectangle currentRect;
+    private MyCircle currentMyCircle;
+
+    private double scale = 1.0;
+    //private double zoomFactor = 2;
+
+    private ControlPanelController controlPanelController;
+
+    private CoordSystem coordSystem;
+
+    private double firstX;
+    private double firstY;
+    private double secondX;
+    private double secondY;
+
+    private double tempX;
+    private double tempY;
+
+    private EventHandler<MouseEvent> highlightHandler;
+    private EventHandler<MouseEvent> createLineHandler;
+    private EventHandler<MouseEvent> showPopupHandler;
+    private EventHandler<KeyEvent> createShapeByPopup;
+    private EventHandler<MouseEvent> createCircleHandler;
+    private EventHandler<MouseEvent> createRectangleHandler;
+
+
+    public CanvasController(Pane canvas){
+         this.canvas = canvas;
+         canvas.setFocusTraversable(true);
+         popup = new MyPopup();
+         popup.setAutoHide(true);
+
+     }
+
+    public Label getModeLabel() {
+        return modeLabel;
+    }
+
+    public void setModeLabel(Label modeLabel) {
+        this.modeLabel = modeLabel;
+    }
+
+    public Mode getMode() {
+        return mode;
+    }
+
+    public void setMode(Mode mode) {
+        this.mode = mode;
+    }
+
+    public Label getCoordX() {
+        return coordX;
+    }
+
+    public void setCoordX(Label coordX) {
+        this.coordX = coordX;
+    }
+
+    public Label getCoordY() {
+        return coordY;
+    }
+
+    public void setCoordY(Label coordY) {
+        this.coordY = coordY;
+    }
+
+    public Label getScrCoordX() {
+        return scrCoordX;
+    }
+
+    public void setScrCoordX(Label scrCoordX) {
+        this.scrCoordX = scrCoordX;
+    }
+
+    public Label getScrCoordY() {
+        return scrCoordY;
+    }
+
+    public void setScrCoordY(Label scrCoordY) {
+        this.scrCoordY = scrCoordY;
+    }
+
+    public Label getScaleLabel() {
+        return scaleLabel;
+    }
+
+    public void setScaleLabel(Label scaleLabel) {
+        this.scaleLabel = scaleLabel;
+    }
+    public CoordSystem getCoordSystem() {
+        return coordSystem;
+    }
+
+    public Label getCoordModeLabel() {
+        return coordModeLabel;
+    }
+
+    public void setCoordModeLabel(Label coordModeLabel) {
+        this.coordModeLabel = coordModeLabel;
+    }
+
+    private void lablesUpd(MouseEvent mouseEvent){
+
+        double[] coord = coordSystem.tranclateScreenToReal(mouseEvent.getX(),mouseEvent.getY());
+
+        coordX.setText(String.format("%.2f",coord[0]));
+        coordY.setText(String.format("%.2f",coord[1]));
+        scrCoordX.setText(String.valueOf(mouseEvent.getX()));
+        scrCoordY.setText(String.valueOf(mouseEvent.getY()));
+        scaleLabel.setText(String.format("%.2f",scale));
+        coordModeLabel.setText(String.valueOf(coordSystem.getCoordMode()));
+        modeLabel.setText(String.valueOf(mode));
+        //System.out.println(scale);
+    }
+    public void initialize(){
+
+         highlightHandler = mouseEvent -> highlight(mouseEvent);
+         createLineHandler = mouseEvent -> createLine(mouseEvent);
+         createShapeByPopup = keyEvent -> createShapeByPopup(keyEvent);
+         showPopupHandler = mouseEvent -> showPopup(mouseEvent);
+         createCircleHandler = mouseEvent -> createCircle(mouseEvent);
+         createRectangleHandler = mouseEvent -> createRectangle(mouseEvent);
+
+        popup.setOnHidden(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent windowEvent) {
+                canvas.requestFocus();
+                setEventHandlerBasedOnMode(Mode.PANORAM);
+            }
+        });
+
+         canvas.setOnMouseMoved(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                lablesUpd(mouseEvent);
+            }
+         });
+        canvas.setOnScroll(new EventHandler<ScrollEvent>() {
+            @Override
+            public void handle(ScrollEvent scrollEvent) {
+
+            }
+        });
+
+        // Проверяем, когда сцена будет отображена
+        canvas.sceneProperty().addListener((observable, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.windowProperty().addListener((obs, oldWindow, newWindow) -> {
+                    if (newWindow != null) {
+                        newWindow.addEventHandler(WindowEvent.WINDOW_SHOWN, event -> {
+                            setCoordSystem(); // Устанавливаем координатную систему только после отображения окна
+                        });
+                    }
+                });
+            }
+        });
+
+        canvas.widthProperty().addListener((observable, oldValue, newValue) -> {
+            canvas.getChildren()
+                    .stream()
+                    .filter(node -> node instanceof CoordSystem).findFirst()
+                    .ifPresentOrElse(
+                            node -> ((CoordSystem) node).extendAxisX((double) newValue - (double) oldValue),
+                            () -> System.err.println("CoordSystem not found in canvas!")
+                    );
+        });
+
+        canvas.heightProperty().addListener((observable, oldValue, newValue) -> {
+            canvas.getChildren().stream()
+                    .filter(node -> node instanceof CoordSystem)
+                    .findFirst()
+                    .ifPresentOrElse(
+                            node -> ((CoordSystem) node).extendAxisY((double) newValue - (double) oldValue),
+                            () -> System.err.println("CoordSystem not found in canvas!")
+                    );
+        });
+
+
+        canvas.setOnScroll(new EventHandler<ScrollEvent>() {
+            @Override
+            public void handle(ScrollEvent scrollEvent) {
+                zoom(scrollEvent);
+                scrollEvent.consume();
+            }
+        });
+
+
+    }
+
+
+
+
+    private void setCoordSystem() {
+        coordSystem = new CoordSystem(canvas.getHeight(), canvas.getWidth());
+        canvas.getChildren().add(coordSystem);
+        controlPanelController.setCoordSystem(coordSystem);
+    }
+
+     public void showPopup(MouseEvent mouseEvent){
+             double[] coord = coordSystem.tranclateScreenToReal(mouseEvent.getX(),mouseEvent.getY());
+
+             popup.setDefaultCoord(coord[0], coord[1]);
+             popup.show(canvas, mouseEvent.getScreenX() + 20, mouseEvent.getScreenY() + 20);
+             canvas.requestFocus();
+     }
+
+     public void hidePopup(){
+         if (popup.isShowing()){
+             popup.hide();
+         }
+     }
+
+
+     public void createShapeByPopup(KeyEvent keyEvent){
+
+        if (keyEvent.getCode() == KeyCode.ENTER) {
+            double[] coord = popup.getCoordinates();
+            switch (mode){
+                case DRAW_LINE -> {
+                    if (coordSystem.getCoordMode() == CoordMode.POLAR){
+                        createLineByPolar(coord[0],coord[1]);
+                    } else if (coordSystem.getCoordMode() == CoordMode.DECART) {
+                        createLineByDecart(coord[0],coord[1]);
+                    }
+                }
+                case DRAW_CIRCLE -> createCircle(coord[0], coord[1], popup.getRadius());
+                case DRAW_RECT -> createRectangle(coord[0], coord[1]);
+
+            }
+
+        }
+
+
+     }
+
+     public void createLineByPolar(double radius, double angle) {
+
+         double[] coord = new double[2];
+
+         if (currentMyLine == null) {
+             firstX = radius * Math.cos(Math.toRadians(angle));
+             firstY = radius * Math.sin(Math.toRadians(angle));
+
+             currentMyLine = new MyLine(firstX, firstY, secondX, secondY);
+         } else {
+             coord = coordSystem.translateRealToScreen(firstX, firstY);
+
+             tempX = firstX;
+             tempY = firstY;
+
+             firstX = coord[0];
+             firstY = coord[1];
+
+             secondX = radius * Math.cos(Math.toRadians(angle));
+             secondY = radius * Math.sin(Math.toRadians(angle));
+
+             coord = coordSystem.translateRealToScreen(secondX, secondY, scale);
+
+             currentMyLine = new MyLine(firstX, firstY, coord[0], coord[1]);
+
+             currentMyLine.setRealX1(tempX);
+             currentMyLine.setRealY1(tempY);
+             currentMyLine.setRealX2(secondX);
+             currentMyLine.setRealY2(secondY);
+
+             currentMyLine.draw(canvas);
+
+             firstX = 0;
+             firstY = 0;
+             secondX = 0;
+             secondY = 0;
+             currentMyLine = null;
+         }
+
+     }
+
+    public void createLineByDecart(double x, double y) {
+
+        double[] coord;
+
+        if (currentMyLine == null) {
+
+            firstX = x;
+            firstY = y;
+
+            currentMyLine = new MyLine(firstX,firstY,0,0);
+        } else {
+            coord = coordSystem.translateRealToScreen(firstX, firstY);
+
+            tempX = firstX;
+            tempY = firstY;
+
+            firstX = coord[0];
+            firstY = coord[1];
+
+            coord = coordSystem.translateRealToScreen(x, y);
+
+            secondX = coord[0];
+            secondY = coord[1];
+
+            currentMyLine = new MyLine(firstX,firstY,secondX,secondY);
+
+            currentMyLine.setRealX1(tempX);
+            currentMyLine.setRealY1(tempY);
+            currentMyLine.setRealX2(x);
+            currentMyLine.setRealY2(y);
+
+            currentMyLine.draw(canvas);
+
+            resetObjAndCoord();
+            currentMyLine = null;
+
+
+        }
+    }
+
+    public void createRectangle(MouseEvent mouseEvent){
+
+         double[] coord;
+        if (currentRect == null){
+            firstX = mouseEvent.getX();
+            firstY = mouseEvent.getY();
+
+            coord = coordSystem.tranclateScreenToReal(firstX, firstY);
+
+            firstX = coord[0];
+            firstY = coord[1];
+
+            currentRect = new Rectangle(firstX, firstY, 0, 0);
+        } else {
+            secondX = mouseEvent.getX();
+            secondY = mouseEvent.getY();
+
+            coord = coordSystem.translateRealToScreen(firstX, firstY, scale);
+
+            tempX = firstX;
+            tempY = firstY;
+
+            firstX = coord[0];
+            firstY = coord[1];
+
+            currentRect = new Rectangle(firstX,firstY,secondX,secondY);
+
+            coord = coordSystem.tranclateScreenToReal(secondX,secondY);
+
+            double realX1 = tempX;
+            double realY1 = tempY;
+            double realX2 = coord[0];
+            double realY2 = coord[1];
+
+            currentRect.setRealCoordinates(List.of(realX1, realY1, realX2, realY1, realX2, realY2, realX1, realY2));
+            System.out.println(currentRect.getRealCoordinates());
+            currentRect.draw(canvas);
+
+            currentRect = null;
+
+            resetObjAndCoord();
+        }
+    }
+
+    public void createRectangle(double x, double y){
+        if (currentRect == null){
+            firstX = x;
+            firstY = y;
+
+            currentRect = new Rectangle(firstX, firstY, 0, 0);
+        } else {
+            secondX = x;
+            secondY = y;
+
+            double[] coord = coordSystem.translateRealToScreen(firstX, firstY, scale);
+            tempX = firstX;
+            tempY = firstY;
+
+            firstX = coord[0];
+            firstY = coord[1];
+            coord = coordSystem.translateRealToScreen(secondX,secondY,scale);
+
+            currentRect = new Rectangle(firstX,firstY,coord[0],coord[1]);
+
+            double realX1 = tempX;
+            double realY1 = tempY;
+            double realX2 = secondX;
+            double realY2 = secondY;
+
+            currentRect.setRealCoordinates(List.of(realX1, realY1, realX2, realY1, realX2, realY2, realX1, realY2));
+
+            currentRect.draw(canvas);
+
+            currentRect = null;
+
+            resetObjAndCoord();
+        }
+    }
+
+    public void createCircle(MouseEvent mouseEvent){
+        if (currentMyCircle == null) {
+            double[] coord = coordSystem.tranclateScreenToReal(mouseEvent.getX(), mouseEvent.getY());
+
+            firstX = coord[0];
+            firstY = coord[1];
+
+            currentMyCircle = new MyCircle(mouseEvent.getX(),mouseEvent.getY(),0);
+            currentMyCircle.setRealCentX(firstX);
+            currentMyCircle.setRealCentY(firstY);
+
+        } else {
+            secondX = mouseEvent.getX();
+            secondY = mouseEvent.getY();
+
+            double[] coord = coordSystem.translateRealToScreen(firstX,firstY,scale);
+
+            firstX = coord[0];
+            firstY = coord[1];
+
+            double radius = Math.sqrt(Math.pow(secondX-firstX,2)+Math.pow(secondY-firstY,2));
+
+            currentMyCircle.move(firstX, firstY);
+
+
+            currentMyCircle.setRealRadius(radius);
+            currentMyCircle.setRadius(radius);
+
+            currentMyCircle.draw(canvas);
+
+            currentMyCircle = (MyCircle) resetObjAndCoord();
+
+        }
+    }
+
+    public void createCircle(double x, double y, double radius) {
+         double[] coord = coordSystem.translateRealToScreen(x, y, scale);
+
+         currentMyCircle = new MyCircle(coord[0], coord[1], radius*scale);
+
+         currentMyCircle.setRealCentX(x);
+         currentMyCircle.setRealCentY(y);
+         currentMyCircle.setRealRadius(radius);
+         currentMyCircle.draw(canvas);
+
+        currentMyCircle = (MyCircle) resetObjAndCoord();
+    }
+
+    public void createLine(MouseEvent mouseEvent) {
+        if (currentMyLine == null) {
+            double[] coord = coordSystem.tranclateScreenToReal(mouseEvent.getX(), mouseEvent.getY());
+
+
+            firstX = coord[0];
+            firstY = coord[1];
+            secondX = firstX;
+            secondY = firstY;
+
+            currentMyLine = new MyLine(firstX,firstY,secondX,secondY);
+        } else {
+            //canvas.getChildren().remove(currentMyLine);
+            secondX = mouseEvent.getX();
+            secondY = mouseEvent.getY();
+
+            double[] coord = coordSystem.translateRealToScreen(firstX,firstY,scale);
+            currentMyLine = new MyLine(coord[0],coord[1],secondX,secondY);
+
+
+            coord = coordSystem.tranclateScreenToReal(secondX, secondY);
+
+            currentMyLine.setRealX1(firstX);
+            currentMyLine.setRealY1(firstY);
+            currentMyLine.setRealX2(coord[0]);
+            currentMyLine.setRealY2(coord[1]);
+
+            currentMyLine.draw(canvas);
+
+            currentMyLine = null;
+
+            resetObjAndCoord();
+
+        }
+    }
+
+    private void setDrawRectHandler() {
+        canvas.setOnMouseMoved(withLablesUpdate(showPopupHandler));
+        canvas.setOnMouseClicked(createRectangleHandler);
+
+        canvas.setOnKeyPressed(createShapeByPopup);
+    }
+
+    private void setDrawCircleHandler() {
+        canvas.setOnMouseMoved(withLablesUpdate(showPopupHandler));
+        canvas.setOnMouseClicked(createCircleHandler);
+        canvas.setOnKeyPressed(createShapeByPopup);
+    }
+
+    private void setPanoramHandler() {
+        canvas.setOnMousePressed(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                if (mouseEvent.isMiddleButtonDown()){
+                    firstX = mouseEvent.getX();
+                    firstY = mouseEvent.getY();
+                    System.out.println(canvas.getChildren());
+                }
+
+
+            }
+        });
+
+        canvas.setOnMouseDragged(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                if (mouseEvent.isMiddleButtonDown()){
+                    secondX = mouseEvent.getX();
+                    secondY = mouseEvent.getY();
+                    double raznicaX = secondX - firstX;
+                    double raznicaY = secondY - firstY;
+
+                    shiftAllObjects(raznicaX,raznicaY);
+                    firstX = secondX;
+                    firstY = secondY;
+                }
+
+            }
+        });
+
+    }
+
+    private void setDrawLineHandler(){
+        canvas.setOnMouseMoved(withLablesUpdate(showPopupHandler));
+        canvas.setOnMouseClicked(createLineHandler);
+        canvas.setOnKeyPressed(createShapeByPopup);
+
+
+    }
+
+    public void setHighlightHandler(){
+        canvas.setOnMouseMoved(withLablesUpdate(highlightHandler));
+    }
+
+    //смена обработчиков
+    public void setEventHandlerBasedOnMode(Mode mode){
+        this.mode = mode;
+        clearAllPaneHandlers();
+        switch (this.mode){
+            case PANORAM -> {
+                setPanoramHandler();
+                setHighlightHandler();
+                setSelectHandler();
+            }
+            case DRAW_LINE -> setDrawLineHandler();
+            case DRAW_CIRCLE -> {
+                setDrawCircleHandler();
+                popup.enableCircleMode();
+            }
+            case DRAW_RECT -> setDrawRectHandler();
+            case DIVIDE -> setDivideHandler();
+        }
+
+
+    }
+
+    private void setDivideHandler() {
+        canvas.setOnMouseMoved(withLablesUpdate(highlightHandler));
+        canvas.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                divide(mouseEvent);
+            }
+        });
+    }
+
+    private void setSelectHandler() {
+        canvas.setOnMouseClicked(mouseEvent -> {
+            if (mouseEvent.getButton() == MouseButton.PRIMARY) {
+                select(mouseEvent);
+            }
+        });
+    }
+
+    private EventHandler<MouseEvent> withLablesUpdate(EventHandler<MouseEvent> originalHandler) {
+        return mouseEvent -> {
+            if (originalHandler != null ){
+                originalHandler.handle(mouseEvent); // Вызов оригинального обработчика
+            }
+
+            lablesUpd(mouseEvent); // Обновление координат
+        };
+    }
+
+    private void clearAllPaneHandlers(){
+        if (popup.isCircleMode()){
+            popup.disableCircleMode();
+        }
+
+        canvas.setOnMousePressed(null);
+        canvas.setOnMouseDragged(null);
+        canvas.setOnMouseMoved(withLablesUpdate(null));
+        canvas.setOnMouseClicked(null);
+        canvas.setOnKeyPressed(null);
+
+        resetObjAndCoord();
+        currentMyLine = null;
+        currentMyCircle = null;
+        currentRect = null;
+    }
+
+    private void highlight(MouseEvent mouseEvent) {
+
+        double mouseX = mouseEvent.getX();
+        double mouseY = mouseEvent.getY();
+        //System.out.println(mouseX + "  " + mouseY);
+        for (Node node :  canvas.getChildren()){
+            if (node instanceof Selectable){
+                if ( ((Selectable) node).isNear(mouseX, mouseY)){
+                    ((Selectable) node).highlight();
+                } else {
+                    ((Selectable) node).deHighlight();
+                }
+            }
+
+        }
+    }
+
+    private void divide(MouseEvent mouseEvent){
+        double mouseX = mouseEvent.getX();
+        double mouseY = mouseEvent.getY();
+
+        boolean found = false;
+
+        for (Node node : canvas.getChildren()) {
+            if (node instanceof Selectable && node instanceof Divided) {
+                if (((Selectable) node).isNear(mouseX, mouseY)) {
+
+                    canvas.getChildren().addAll(((Divided) node).divide());
+                    canvas.getChildren().remove(node);
+                    found = true;
+                    break; // Прекратить цикл
+
+                }
+            }
+        }
+
+        if (!found) {
+            controlPanelController.updateControlPanel(null, null);
+        }
+    }
+
+    private void select(MouseEvent mouseEvent) {
+
+        double mouseX = mouseEvent.getX();
+        double mouseY = mouseEvent.getY();
+
+        System.out.println(canvas.getChildren());
+
+        boolean found = false;
+
+        for (Node node : canvas.getChildren()) {
+            if (node instanceof Selectable) {
+                if (((Selectable) node).isNear(mouseX, mouseY)) {
+                    controlPanelController.updateControlPanel((Selectable) node, mouseEvent);
+                    found = true;
+                    break; // Прекратить цикл
+                }
+            }
+        }
+
+        if (!found) {
+            controlPanelController.updateControlPanel(null, null);
+        }
+    }
+
+    private void zoom(ScrollEvent scrollEvent){
+
+        double zoomFactor = 2;
+        double delta = (scrollEvent.getDeltaY() > 0) ? zoomFactor : (1/zoomFactor);
+
+        scale *= delta;
+
+        coordSystem.setScale(scale);
+
+        for (Node node : canvas.getChildren()){
+            if (node instanceof Zoomable){
+                ((Zoomable) node).zoom(scrollEvent,delta);
+            }
+        }
+    }
+
+    private void shiftAllObjects(double raznicaX, double raznicaY){
+        for (Node node : canvas.getChildren()){
+            if (node instanceof Movable){
+                ((Movable) node).shift(raznicaX, raznicaY);
+            }
+        }
+    }
+
+    public void changeCoordMode() {
+        coordSystem.changeCoordMode();
+        coordModeLabel.setText(String.valueOf(coordSystem.getCoordMode()));
+    }
+
+    public Node resetObjAndCoord(){
+        firstX = 0;
+        firstY = 0;
+        secondX = 0;
+        secondY = 0;
+        tempX = 0;
+        tempY = 0;
+        return null;
+    }
+
+    public ControlPanelController getControlPanelController() {
+        return controlPanelController;
+    }
+
+    public void setControlPanelController(ControlPanelController controlPanelController) {
+        this.controlPanelController = controlPanelController;
+    }
 }
