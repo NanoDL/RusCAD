@@ -3,32 +3,23 @@ package ru.ruslan.spring.cad.Models;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.shape.Line;
 import ru.ruslan.spring.cad.Interfaces.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class MyLine extends Figure implements Zoomable, Movable, Drawable, Selectable, Rotatable, Stylized {
-
-
+public class LineForSpline extends Figure implements Zoomable, Movable, Drawable, Selectable, Rotatable{
     private Line line;
-
-    private Point2D startPoint;
-    private Point2D endPoint;
-
     private double realX1, realY1, realX2, realY2;
 
-    public MyLine(double x1, double y1, double x2, double y2){
+    public LineForSpline(double x1, double y1, double x2, double y2){
         super();
 
         line = new Line(x1, y1, x2, y2);
 
-        startPoint = new Point2D(x1,y1);
-        endPoint = new Point2D(x2,y2);
-
         line.setStrokeWidth(width);
-        super.getChildren().addAll(line, startPoint, endPoint);
+        super.getChildren().addAll(line);
     }
 
     @Override
@@ -42,15 +33,6 @@ public class MyLine extends Figure implements Zoomable, Movable, Drawable, Selec
     @Override
     List<Double> getRealCoordinates() {
         return coordinates;
-    }
-
-    public void setVisiblePoints(boolean bool){
-        if (!bool){
-            super.getChildren().removeAll(startPoint, endPoint);
-        } else {
-            super.getChildren().addAll(startPoint, endPoint);
-        }
-
     }
 
     public double getRealX1() {
@@ -84,18 +66,7 @@ public class MyLine extends Figure implements Zoomable, Movable, Drawable, Selec
     public void setRealY2(double realY2) {
         this.realY2 = realY2;
     }
-    public Point2D getStartPoint() {
-        return startPoint;
-    }
-
-    public Point2D getEndPoint() {
-        return endPoint;
-    }
-
-    public void setClickablePoints(boolean bool){
-        startPoint.setClickable(bool);
-        endPoint.setClickable(bool);
-    }
+    
 
     @Override
     public void shift(double differenceX, double differenceY) {
@@ -103,11 +74,6 @@ public class MyLine extends Figure implements Zoomable, Movable, Drawable, Selec
         line.setStartY(line.getStartY()+differenceY);
         line.setEndX(line.getEndX()+differenceX);
         line.setEndY(line.getEndY()+differenceY);
-
-        startPoint.setCenterX(line.getStartX());
-        startPoint.setCenterY(line.getStartY());
-        endPoint.setCenterX(line.getEndX());
-        endPoint.setCenterY(line.getEndY());
     }
 
     @Override
@@ -121,11 +87,6 @@ public class MyLine extends Figure implements Zoomable, Movable, Drawable, Selec
         line.setStartY(v[1]);
         line.setEndX(v[2]);
         line.setEndY(v[3]);
-
-        startPoint.setCenterX(v[0]);
-        startPoint.setCenterY(v[1]);
-        endPoint.setCenterX(v[2]);
-        endPoint.setCenterY(v[3]);
     }
 
     @Override
@@ -153,7 +114,6 @@ public class MyLine extends Figure implements Zoomable, Movable, Drawable, Selec
 
     @Override
     public Figure select() {
-        highlight();
         return this;
     }
 
@@ -192,41 +152,43 @@ public class MyLine extends Figure implements Zoomable, Movable, Drawable, Selec
 
     @Override
     public void deSelect() {
-        deHighlight();
+        line.setStroke(Color.BLACK);
     }
 
+    public void setStartX(double x){
+        line.setStartX(x);
+    }
+    public void setEndX(double x){
+        line.setEndX(x);
+    }
+    public void setStartY(double x){
+        line.setStartY(x);
+    }
+    public void setEndY(double x){
+        line.setEndY(x);
+    }
 
     @Override
     public void rotate(double x, double y, double angle) {
 
     }
 
-    @Override
-    public void setupStyle(double width, List<Double> dashes, Double scale) {
+    public void setStrokeWidth(double width) {
         this.width = width;
         line.setStrokeWidth(width);
-
-        line.getStrokeDashArray().clear();
-        if (dashes != null) {
-            List<Double> newList = new ArrayList<>();
-            for (Double dash : dashes) {
-                newList.add(dash * scale);
-            }
-            line.getStrokeDashArray().addAll(newList);
-        }
-
+    }
+    public void setStroke(Paint color) {
+        line.setStroke(color);
     }
 
     @Override
-    public void updateStyle(double scale) {
-        List<Double> list = line.getStrokeDashArray();
-        List<Double> newList = new ArrayList<>();
-        for (Double aDouble : list) {
-            newList.add(aDouble * scale);
-        }
-        line.getStrokeDashArray().clear();
-        line.getStrokeDashArray().addAll(newList);
+    public String toString() {
+        return "LineForSpline{" +
+                "line=" + line +
+                ", realX1=" + realX1 +
+                ", realY1=" + realY1 +
+                ", realX2=" + realX2 +
+                ", realY2=" + realY2 +
+                '}';
     }
-
-
 }

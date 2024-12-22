@@ -14,6 +14,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
+import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import ru.ruslan.spring.cad.*;
 import ru.ruslan.spring.cad.Interfaces.Movable;
@@ -53,8 +54,10 @@ public class MainWindowController {
 
     private ControlPanelController controlPanelController;
 
+    private StyleMenuContrl styleMenuContrl;
 
     private Scene scene;
+    private Stage stage;
     private Mode mode = Mode.PANORAM;
 
 
@@ -67,8 +70,10 @@ public class MainWindowController {
 
 
     public void initialize(){
-
+        styleMenuContrl = new StyleMenuContrl(canvas);
         canvasController = new CanvasController(canvas);
+        styleMenuContrl.setCanvasController(canvasController);
+        canvasController.setStyleMenuContrl(styleMenuContrl);
         controlPanelController = new ControlPanelController(controlPanel);
 
         canvasController.setCoordX(this.coordX);
@@ -100,7 +105,13 @@ public class MainWindowController {
         this.scene = scene;
     }
 
+    public Stage getStage() {
+        return stage;
+    }
 
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
 
     @FXML
     public void changeModeToLine(ActionEvent event){
@@ -134,5 +145,43 @@ public class MainWindowController {
     @FXML
     public void changeModeToDivide(ActionEvent event) {
         canvasController.setEventHandlerBasedOnMode(Mode.DIVIDE);
+    }
+    @FXML
+    public void changeModeToCircle3Dots(ActionEvent event) {
+        canvasController.setEventHandlerBasedOnMode(Mode.DRAW_CIRCLE3DOTS);
+    }
+    @FXML
+    public void cangeModeToSplineBezie(ActionEvent event) {
+        canvasController.setEventHandlerBasedOnMode(Mode.DRAW_SPLINEBEZIE);
+    }
+    @FXML
+    public void changeModeToArcRC(ActionEvent event) {
+        canvasController.setEventHandlerBasedOnMode(Mode.DRAW_ARCRC);
+    }
+
+    @FXML
+    public void changeModeToPolyIn(ActionEvent event) {
+        canvasController.setEventHandlerBasedOnMode(Mode.DRAW_POLYGON_IN);
+    }
+
+    @FXML
+    public void changeModeToPolyOut(ActionEvent event) {
+        canvasController.setEventHandlerBasedOnMode(Mode.DRAW_POLYGON_OUT);
+    }
+    @FXML
+    public void changeModeToRectCentr(ActionEvent event) {
+        canvasController.setEventHandlerBasedOnMode(Mode.DRAW_RECT_CENTR);
+    }
+    @FXML
+    public void changeModeToArc3Dots(ActionEvent event) {
+        canvasController.setEventHandlerBasedOnMode(Mode.DRAW_ARC3DOTS);
+    }
+    @FXML
+    public void changeModeToMySpline(ActionEvent event) {
+        canvasController.setEventHandlerBasedOnMode(Mode.DRAW_SPLINE_MYSPLINE);
+    }
+    @FXML
+    public void showStyleMenu(ActionEvent event) {
+        styleMenuContrl.show(stage);
     }
 }

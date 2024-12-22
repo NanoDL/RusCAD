@@ -59,16 +59,41 @@
         </center>
         <top >
         <ToolBar prefHeight="50">
-            <Button text="Файл"/>
+ 
             <MenuButton text="Построить">
                 <items>
                     <MenuItem text="Линия" onAction="#changeModeToLine"/>
                     <Menu text="Круг">
                         <items>
                             <MenuItem text="Центр, радиус" onAction="#changeModeToCircle"/>
+                            <MenuItem text="3 точки" onAction="#changeModeToCircle3Dots"/>
                         </items>
                     </Menu>
-                    <MenuItem text="Прямоугольник" onAction="#changeModeToRectrangle"/>
+                    <Menu text="Прямоугольник">
+                        <items>
+                            <MenuItem text="По сторонам" onAction="#changeModeToRectrangle"/>
+                            <MenuItem text="От центра" onAction="#changeModeToRectCentr"/>
+                        </items>
+                    </Menu>
+
+                    <Menu text="Сплайн">
+                        <items>
+                            <MenuItem text="Безье" onAction="#cangeModeToSplineBezie"/>
+                            <MenuItem text="По отрезкам" onAction="#changeModeToMySpline"/>
+                        </items>
+                    </Menu>
+                    <Menu text="Дуга">
+                        <items>
+                            <MenuItem text="Радиус, хорда" onAction="#changeModeToArcRC"/>
+                            <MenuItem text="3 точки" onAction="#changeModeToArc3Dots"/>
+                        </items>
+                    </Menu>
+                    <Menu text="Многоугольник">
+                        <items>
+                            <MenuItem text="Вписанный" onAction="#changeModeToPolyIn"/>
+                            <MenuItem text="Описанный" onAction="#changeModeToPolyOut"/>
+                        </items>
+                    </Menu>
                 </items>
             </MenuButton>
             <MenuButton text="Изменить">
@@ -76,8 +101,9 @@
                     <MenuItem text="Расчленить" onAction="#changeModeToDivide"/>
                 </items>
             </MenuButton>
-            <Button text="Панорамирование" onAction="#changeModeToPanoram"/>
+            <Button text="Сбросить" onAction="#changeModeToPanoram"/>
             <Button text="Режим координат" onAction="#changeCoordMode"/>
+            <Button text="Настройка стиля" onAction="#showStyleMenu"/>
         </ToolBar>
         </top>
 

@@ -5,15 +5,13 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import ru.ruslan.spring.cad.Interfaces.Drawable;
-import ru.ruslan.spring.cad.Interfaces.Movable;
-import ru.ruslan.spring.cad.Interfaces.Selectable;
-import ru.ruslan.spring.cad.Interfaces.Zoomable;
+import ru.ruslan.spring.cad.Interfaces.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
-public class MyCircle extends Figure implements Drawable, Movable, Zoomable, Selectable {
+public class MyCircle extends Figure implements Drawable, Movable, Zoomable, Selectable, Stylized {
 
     Point2D center;
 
@@ -142,8 +140,9 @@ public class MyCircle extends Figure implements Drawable, Movable, Zoomable, Sel
     }
 
     @Override
-    public void select() {
-
+    public Figure select() {
+        highlight();
+        return this;
     }
 
     @Override
@@ -165,6 +164,34 @@ public class MyCircle extends Figure implements Drawable, Movable, Zoomable, Sel
 
     @Override
     public void deSelect() {
+        deHighlight();
 
+    }
+
+    @Override
+    public void setupStyle(double width, List<Double> dashes, Double scale) {
+        this.width = width;
+        circle.setStrokeWidth(width);
+
+        circle.getStrokeDashArray().clear();
+        if (dashes != null) {
+            List<Double> newList = new ArrayList<>();
+            for (Double dash : dashes) {
+                newList.add(dash * scale);
+            }
+            circle.getStrokeDashArray().addAll(newList);
+        }
+
+    }
+
+    @Override
+    public void updateStyle(double scale) {
+        List<Double> list = circle.getStrokeDashArray();
+        List<Double> newList = new ArrayList<>();
+        for (Double aDouble : list) {
+            newList.add(aDouble * scale);
+        }
+        circle.getStrokeDashArray().clear();
+        circle.getStrokeDashArray().addAll(newList);
     }
 }

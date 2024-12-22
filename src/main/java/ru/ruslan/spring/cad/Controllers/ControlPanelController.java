@@ -52,10 +52,10 @@ public class ControlPanelController {
 
         switch (shape) {
             case MyLine line -> {
-                TextField startX = new TextField(String.valueOf(line.getRealX1()));
-                TextField startY = new TextField(String.valueOf(line.getRealY1()));
-                TextField endX = new TextField(String.valueOf(line.getRealX2()));
-                TextField endY = new TextField(String.valueOf(line.getRealY2()));
+                TextField startX = new TextField("" + Math.round(line.getRealX1() * 10000.0) / 10000.0);
+                TextField startY = new TextField("" + Math.round(line.getRealY1() * 10000.0) / 10000.0);
+                TextField endX = new TextField("" + Math.round(line.getRealX2() * 10000.0) / 10000.0);
+                TextField endY = new TextField("" + Math.round(line.getRealY2() * 10000.0) / 10000.0);
 
                 TextField rotationX = new TextField();
                 TextField rotationY = new TextField();
@@ -113,9 +113,9 @@ public class ControlPanelController {
                 );
             }
             case MyCircle myCircle -> {
-                TextField centerX = new TextField(String.valueOf(myCircle.getRealCentX()));
-                TextField centerY = new TextField(String.valueOf(myCircle.getRealCentY()));
-                TextField radius = new TextField(String.valueOf(myCircle.getRealRadius()));
+                TextField centerX = new TextField("" + Math.round(myCircle.getRealCentX() * 10000.0) / 10000.0);
+                TextField centerY = new TextField("" + Math.round(myCircle.getRealCentY() * 10000.0) / 10000.0);
+                TextField radius = new TextField("" + Math.round(myCircle.getRealRadius() * 10000.0) / 10000.0);
 
                 Button apply = new Button("Применить");
                 apply.setOnAction(e -> {
@@ -142,7 +142,6 @@ public class ControlPanelController {
 
                     double x = Double.parseDouble(centerX.getText());
                     double y = Double.parseDouble(centerY.getText());
-                    double r = Double.parseDouble(radius.getText());
 
                     double aroundX = Double.parseDouble(rotationX.getText());
                     double aroundY = Double.parseDouble(rotationY.getText());
@@ -173,8 +172,8 @@ public class ControlPanelController {
                 List<Double> coordinates = rectangle.getRealCoordinates();
                 List<TextField> textCoordinates = new ArrayList<>();
 
-                for (Double coord : coordinates){
-                    textCoordinates.add(new TextField(String.valueOf(coord)));
+                for (Double coord : coordinates) {
+                    textCoordinates.add(new TextField("" + Math.round(coord * 10000.0) / 10000.0));
                 }
 
                 Button apply = new Button("Применить");
@@ -248,9 +247,87 @@ public class ControlPanelController {
 
 
             }
+            case MyArc arc -> {
+                List<Double> coordinates = arc.getRealCoordinates();
+                List<TextField> textCoordinates = new ArrayList<>();
+
+                for (Double coord : coordinates) {
+                    textCoordinates.add(new TextField("" + Math.round(coord * 10000.0) / 10000.0));
+                }
+
+                Button apply = new Button("Применить");
+
+                apply.setOnAction(e -> {
+                    List<Double> newRealCoord = new ArrayList<>();
+
+                    for (TextField textField : textCoordinates){
+                        newRealCoord.add(Double.parseDouble(textField.getText()));
+                    }
+
+                    arc.setRealCoordinates(newRealCoord);
+
+                    List<Double> newCoord = new ArrayList<>();
+
+                    for (int i = 0; i<newRealCoord.size()-1; i+=2){
+                        System.out.println(newRealCoord.get(i) + " " + newRealCoord.get(i+1));
+                        double[] coord = coordSystem.translateRealToScreen(newRealCoord.get(i),newRealCoord.get(i+1));
+
+                        for (Double v : coord){
+                            newCoord.add(v);
+                        }
+                    }
+
+                    arc.move(newCoord);
+                });
+
+                TextField rotationX = new TextField();
+                TextField rotationY = new TextField();
+                TextField angleText = new TextField();
+
+                Button rotate = new Button("Повернуть");
+                rotate.setOnAction(e -> {
+
+                    double aroundX = Double.parseDouble(rotationX.getText());
+                    double aroundY = Double.parseDouble(rotationY.getText());
+                    double angle = Double.parseDouble(angleText.getText());
+
+                    List<Double> newRealCoord = new ArrayList<>();
+                    List<Double> newCoord = new ArrayList<>();
+
+                    for (int i = 0; i < coordinates.size() - 1; i += 2) {
+                        double[] coord = CoordSystem.rotateAround(coordinates.get(i), coordinates.get(i+1), angle, aroundX, aroundY);
+                        double[] coord1 = coordSystem.translateRealToScreen(coord[0], coord[1]);
+
+                        for (Double v : coord){
+                            newRealCoord.add(v);
+                        }
+                        for (Double v : coord1){
+                            newCoord.add(v);
+                        }
+                    }
+
+                    arc.setRealCoordinates(newRealCoord);
+                    arc.move(newCoord);
+
+
+
+                });
+
+                controlPanel.getChildren().add(new Label("Координаты (X, Y):"));
+                for (TextField textField : textCoordinates){
+                    controlPanel.getChildren().add(textField);
+                }
+
+                controlPanel.getChildren().addAll(
+                        apply,new Label("Повернуть вокруг точки:"), rotationX, rotationY,
+                        new Label("На угол"), angleText,
+                        rotate
+                );
+            }
             case Point2D point2D -> {
             }
             default -> {
+                hideControlPanel();
             }
         }
     }

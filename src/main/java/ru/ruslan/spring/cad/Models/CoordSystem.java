@@ -1,12 +1,14 @@
 package ru.ruslan.spring.cad.Models;
 
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import ru.ruslan.spring.cad.Interfaces.Movable;
 import ru.ruslan.spring.cad.Interfaces.Zoomable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CoordSystem extends Group implements Movable, Zoomable {
@@ -111,7 +113,26 @@ public class CoordSystem extends Group implements Movable, Zoomable {
         vertLine.setEndY(vertLine.getEndY()+y);
     }
 
-    public double[] tranclateScreenToReal(double screenX, double screenY){
+    public List<Double> translatePointsToCoord(List<Point2D> points){
+        List<Double> coord = new ArrayList<>();
+        for (Point2D point2D : points){
+            coord.add(point2D.getCenterX());
+            coord.add(point2D.getCenterY());
+        }
+        return coord;
+    }
+
+    public static List<Double> translatePointsToCoord(Group points){
+        List<Double> coord = new ArrayList<>();
+        for (Node node : points.getChildren()){
+            Point2D point2D = (Point2D) node;
+            coord.add(point2D.getCenterX());
+            coord.add(point2D.getCenterY());
+        }
+        return coord;
+    }
+
+    public double[] translateScreenToReal(double screenX, double screenY){
         double realX = (screenX - originX)/scale;
         double realY = (originY - screenY)/scale;
 
@@ -119,9 +140,37 @@ public class CoordSystem extends Group implements Movable, Zoomable {
         //realx*factor + originX = screenX
         // originY - realY*factor  =screenY
     }
+    public List<Double> translateScreenToReal(List<Double> coordinates){
+        List<Double> newCoord = new ArrayList<>();
+
+        for (int i = 0; i < coordinates.size()-1; i+=2) {
+            double realX = (coordinates.get(i) - originX) / scale;
+            double realY = (originY - coordinates.get(i + 1)) / scale;
+            newCoord.addAll(List.of(realX, realY));
+        }
+
+        return newCoord;
+        //realx*factor + originX = screenX
+        // originY - realY*factor  =screenY
+    }
 
     public double[] translateRealToScreen(double realX, double realY, double factor) {
         return translateRealToScreen(realX, realY);
+    }
+
+    public List<Double> translateRealToScreen(List<Double> coordinates){
+        List<Double> newCoord = new ArrayList<>();
+        for (int i = 0; i<coordinates.size()-1; i+=2 ){
+            double screenX = originX + coordinates.get(i)*scale;
+            double screenY = originY - coordinates.get(i+1)*scale;
+            System.out.println(coordinates.get(i));
+            System.out.println(coordinates.get(i+1));
+            newCoord.add(screenX);
+            newCoord.add(screenY);
+
+        }
+
+        return newCoord;
     }
 
     public double[] translateRealToScreen(double realX, double realY){

@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Rectangle extends Figure implements Drawable, Zoomable, Movable, Selectable, Divided {
+public class Rectangle extends Figure implements Drawable, Zoomable, Movable, Selectable, Divided, Stylized {
 
     private MyLine line1;
     private MyLine line2;
@@ -28,6 +28,7 @@ public class Rectangle extends Figure implements Drawable, Zoomable, Movable, Se
         line3 = new MyLine(coord[4], coord[5], coord[6], coord[7]);
         line4 = new MyLine(coord[6], coord[7], coord[0], coord[1]);
 
+
         super.getChildren().addAll(line1, line2, line3, line4);
     }
 
@@ -39,6 +40,19 @@ public class Rectangle extends Figure implements Drawable, Zoomable, Movable, Se
         line4 = new MyLine(x1, y2, x1, y1);
 
         super.getChildren().addAll(line1, line2, line3, line4);
+    }
+
+    public List<Double> getScreenCoordinates(){
+        List<Double> coord = new ArrayList<>();
+        Point2D point = line1.getStartPoint();
+        coord.addAll(List.of(point.getCenterX(), point.getCenterY()));
+        point = line2.getStartPoint();
+        coord.addAll(List.of(point.getCenterX(), point.getCenterY()));
+        point = line3.getStartPoint();
+        coord.addAll(List.of(point.getCenterX(), point.getCenterY()));
+        point = line4.getStartPoint();
+        coord.addAll(List.of(point.getCenterX(), point.getCenterY()));
+        return coord;
     }
 
     public void setRealCoordinates(List<Double> v){
@@ -95,8 +109,12 @@ public class Rectangle extends Figure implements Drawable, Zoomable, Movable, Se
     }
 
     @Override
-    public void select() {
-
+    public Figure select() {
+        line1.select();
+        line2.select();
+        line3.select();
+        line4.select();
+        return this;
     }
 
     @Override
@@ -137,5 +155,22 @@ public class Rectangle extends Figure implements Drawable, Zoomable, Movable, Se
         line4.setRealCoordinates(subList);
 
         return new Figure[] {line1, line2, line3, line4};
+    }
+
+    @Override
+    public void setupStyle(double width, List<Double> dashes, Double scale) {
+        this.width = width;
+        line1.setupStyle(width, dashes, scale);
+        line2.setupStyle(width, dashes, scale);
+        line3.setupStyle(width, dashes, scale);
+        line4.setupStyle(width, dashes, scale);
+    }
+
+    @Override
+    public void updateStyle(double scale) {
+        line2.updateStyle(scale);
+        line1.updateStyle(scale);
+        line3.updateStyle(scale);
+        line4.updateStyle(scale);
     }
 }
