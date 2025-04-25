@@ -6,6 +6,8 @@ module ru.ruslan.spring.cad {
     requires com.dlsc.formsfx;
     requires org.kordamp.bootstrapfx.core;
     requires java.desktop;
+    requires jdxf;
+    requires aspose.cad;
 
     opens ru.ruslan.spring.cad to javafx.fxml;
     exports ru.ruslan.spring.cad;

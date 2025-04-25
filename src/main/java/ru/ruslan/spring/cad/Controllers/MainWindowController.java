@@ -1,27 +1,19 @@
 package ru.ruslan.spring.cad.Controllers;
 
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import ru.ruslan.spring.cad.*;
-import ru.ruslan.spring.cad.Interfaces.Movable;
-import ru.ruslan.spring.cad.Interfaces.Zoomable;
-import ru.ruslan.spring.cad.Models.*;
+import ru.ruslan.spring.cad.Savers.DXFExporter;
+import ru.ruslan.spring.cad.Services.CoordService;
 
-import javax.swing.text.ViewFactory;
+import java.io.File;
 //import javafx.scene.shape.Line;
 
 //import java.awt.geom.Line2D;
@@ -60,6 +52,7 @@ public class MainWindowController {
     private Stage stage;
     private Mode mode = Mode.PANORAM;
 
+    private ImportsController importsController;
 
     public MainWindowController (){
 
@@ -75,6 +68,7 @@ public class MainWindowController {
         styleMenuContrl.setCanvasController(canvasController);
         canvasController.setStyleMenuContrl(styleMenuContrl);
         controlPanelController = new ControlPanelController(controlPanel);
+        importsController = new ImportsController();
 
         canvasController.setCoordX(this.coordX);
         canvasController.setCoordY(this.coordY);
@@ -183,5 +177,55 @@ public class MainWindowController {
     @FXML
     public void showStyleMenu(ActionEvent event) {
         styleMenuContrl.show(stage);
+    }
+
+    @FXML
+    public void saveFile(ActionEvent event) {
+        FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter("dxf", "*.dxf");
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Сохранить файл");
+        fileChooser.getExtensionFilters().add(extensionFilter);
+
+        File selectedFile = fileChooser.showSaveDialog(stage);
+        if (selectedFile != null){
+            System.out.println("Файл сохранён");
+            
+            // Просто передаем панель в DXFExporter
+            // Экспортер сам получит стили (толщина, штрихи) из объектов
+            DXFExporter.exportToDXF(canvasController.getCanvas(), selectedFile.getPath());
+        }
+    }
+
+    @FXML
+    public void openFile(ActionEvent event) {
+        FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter("dxf", "*.dxf");
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Открыть файл");
+        fileChooser.getExtensionFilters().add(extensionFilter);
+
+        File selectedFile = fileChooser.showOpenDialog(stage);
+        if (selectedFile != null) {
+            System.out.println("Открываем файл: " + selectedFile.getPath());
+            
+            // Очищаем текущий холст перед импортом
+            canvasController.clearCanvas();
+            
+            // Используем ImportsController вместо прямого вызова DXFImporter
+            CoordService coordService = canvasController.getCoordService();
+            boolean success = importsController.importDXF(
+                    selectedFile.getPath(), 
+                    canvasController.getCanvas(), 
+                    coordService,
+                    styleMenuContrl  // Передаем контроллер стилей
+            );
+            
+            if (success) {
+                System.out.println("Файл успешно импортирован");
+            } else {
+                System.err.println("Ошибка при импорте файла");
+            }
+        }
     }
 }

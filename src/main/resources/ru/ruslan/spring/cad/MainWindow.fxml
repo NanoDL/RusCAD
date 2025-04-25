@@ -59,7 +59,12 @@
         </center>
         <top >
         <ToolBar prefHeight="50">
- 
+            <MenuButton text="Файл">
+                <items>
+                    <MenuItem text="Открыть" onAction="#openFile"/>
+                    <MenuItem text="Сохранить" onAction="#saveFile"/>
+                </items>
+            </MenuButton>
             <MenuButton text="Построить">
                 <items>
                     <MenuItem text="Линия" onAction="#changeModeToLine"/>

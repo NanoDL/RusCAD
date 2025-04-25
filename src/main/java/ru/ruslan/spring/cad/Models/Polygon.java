@@ -10,11 +10,12 @@ import ru.ruslan.spring.cad.Mode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Polygon extends Figure implements Movable, Drawable, Selectable, Zoomable, Divided {
+public class Polygon extends Figure implements Movable, Drawable, Selectable, Zoomable, Divided, Stylized {
 
     private Group lines;
     private double radius;
     private double linesNumber;
+    private double width;
 
     public Polygon(List<Double> coord,double linesNumber,  Mode mode){
 
@@ -199,27 +200,51 @@ public class Polygon extends Figure implements Movable, Drawable, Selectable, Zo
 
     @Override
     public Figure select() {
+        for (Node node : lines.getChildren()) {
+            if (node instanceof MyLine) {
+                ((MyLine) node).select();
+            }
+        }
         return this;
     }
 
     @Override
     public void highlight() {
-
+        for (Node node : lines.getChildren()) {
+            if (node instanceof MyLine) {
+                ((MyLine) node).highlight();
+            }
+        }
     }
 
     @Override
     public void deHighlight() {
-
+        for (Node node : lines.getChildren()) {
+            if (node instanceof MyLine) {
+                ((MyLine) node).deHighlight();
+            }
+        }
     }
 
     @Override
     public boolean isNear(double x, double y) {
+        for (Node node : lines.getChildren()) {
+            if (node instanceof MyLine) {
+                if (((MyLine) node).isNear(x, y)) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
     @Override
     public void deSelect() {
-
+        for (Node node : lines.getChildren()) {
+            if (node instanceof MyLine) {
+                ((MyLine) node).deSelect();
+            }
+        }
     }
 
     @Override
@@ -229,14 +254,22 @@ public class Polygon extends Figure implements Movable, Drawable, Selectable, Zo
         }
     }
 
+    public Group getLines() {
+        return lines;
+    }
+
+    public void setLines(Group lines) {
+        this.lines = lines;
+    }
+
     @Override
     public void setRealCoordinates(List<Double> v) {
-
+        coordinates = v;
     }
 
     @Override
     public List<Double> getRealCoordinates() {
-        return List.of();
+        return coordinates;
     }
 
     @Override
@@ -250,5 +283,24 @@ public class Polygon extends Figure implements Movable, Drawable, Selectable, Zo
 
     public void setRadius(double radius) {
         this.radius = radius;
+    }
+
+    @Override
+    public void setupStyle(double width, List<Double> dashes, Double scale) {
+        this.width = width;
+        for (Node node : lines.getChildren()) {
+            if (node instanceof Stylized) {
+                ((Stylized) node).setupStyle(width, dashes, scale);
+            }
+        }
+    }
+
+    @Override
+    public void updateStyle(double scale) {
+        for (Node node : lines.getChildren()) {
+            if (node instanceof Stylized) {
+                ((Stylized) node).updateStyle(scale);
+            }
+        }
     }
 }

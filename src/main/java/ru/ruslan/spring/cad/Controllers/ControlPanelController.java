@@ -50,6 +50,10 @@ public class ControlPanelController {
         controlPanel.requestFocus();
         controlPanel.getChildren().clear();
 
+        TextField rotationX = new TextField();
+        TextField rotationY = new TextField();
+        TextField angleText = new TextField();
+
         switch (shape) {
             case MyLine line -> {
                 TextField startX = new TextField("" + Math.round(line.getRealX1() * 10000.0) / 10000.0);
@@ -57,9 +61,6 @@ public class ControlPanelController {
                 TextField endX = new TextField("" + Math.round(line.getRealX2() * 10000.0) / 10000.0);
                 TextField endY = new TextField("" + Math.round(line.getRealY2() * 10000.0) / 10000.0);
 
-                TextField rotationX = new TextField();
-                TextField rotationY = new TextField();
-                TextField angleText = new TextField();
 
                 Button apply = new Button("Применить");
                 apply.setOnAction(e -> {
@@ -109,7 +110,6 @@ public class ControlPanelController {
                         new Label("Повернуть вокруг точки:"), rotationX, rotationY,
                         new Label("На угол"), angleText,
                         rotate
-
                 );
             }
             case MyCircle myCircle -> {
@@ -132,14 +132,8 @@ public class ControlPanelController {
                     myCircle.setRadius(r * coordSystem.getScale());
                 });
 
-                TextField rotationX = new TextField();
-                TextField rotationY = new TextField();
-                TextField angleText = new TextField();
-
                 Button rotate = new Button("Повернуть");
-
                 rotate.setOnAction(e -> {
-
                     double x = Double.parseDouble(centerX.getText());
                     double y = Double.parseDouble(centerY.getText());
 
@@ -154,9 +148,6 @@ public class ControlPanelController {
                     coord1 = coordSystem.translateRealToScreen(coord1[0], coord1[1]);
 
                     myCircle.move(coord1[0], coord1[1]);
-
-
-
                 });
 
                 controlPanel.getChildren().addAll(
@@ -177,7 +168,6 @@ public class ControlPanelController {
                 }
 
                 Button apply = new Button("Применить");
-
                 apply.setOnAction(e -> {
                     List<Double> newRealCoord = new ArrayList<>();
 
@@ -201,13 +191,8 @@ public class ControlPanelController {
                     rectangle.move(newCoord);
                 });
 
-                TextField rotationX = new TextField();
-                TextField rotationY = new TextField();
-                TextField angleText = new TextField();
-
                 Button rotate = new Button("Повернуть");
                 rotate.setOnAction(e -> {
-
                     double aroundX = Double.parseDouble(rotationX.getText());
                     double aroundY = Double.parseDouble(rotationY.getText());
                     double angle = Double.parseDouble(angleText.getText());
@@ -229,9 +214,6 @@ public class ControlPanelController {
 
                     rectangle.setRealCoordinates(newRealCoord);
                     rectangle.move(newCoord);
-
-
-
                 });
 
                 controlPanel.getChildren().add(new Label("Координаты (X, Y):"));
@@ -244,8 +226,6 @@ public class ControlPanelController {
                         new Label("На угол"), angleText,
                         rotate
                 );
-
-
             }
             case MyArc arc -> {
                 List<Double> coordinates = arc.getRealCoordinates();
@@ -256,7 +236,6 @@ public class ControlPanelController {
                 }
 
                 Button apply = new Button("Применить");
-
                 apply.setOnAction(e -> {
                     List<Double> newRealCoord = new ArrayList<>();
 
@@ -280,13 +259,8 @@ public class ControlPanelController {
                     arc.move(newCoord);
                 });
 
-                TextField rotationX = new TextField();
-                TextField rotationY = new TextField();
-                TextField angleText = new TextField();
-
                 Button rotate = new Button("Повернуть");
                 rotate.setOnAction(e -> {
-
                     double aroundX = Double.parseDouble(rotationX.getText());
                     double aroundY = Double.parseDouble(rotationY.getText());
                     double angle = Double.parseDouble(angleText.getText());
@@ -308,9 +282,6 @@ public class ControlPanelController {
 
                     arc.setRealCoordinates(newRealCoord);
                     arc.move(newCoord);
-
-
-
                 });
 
                 controlPanel.getChildren().add(new Label("Координаты (X, Y):"));
@@ -325,6 +296,7 @@ public class ControlPanelController {
                 );
             }
             case Point2D point2D -> {
+                // Handle Point2D case
             }
             default -> {
                 hideControlPanel();

@@ -9,20 +9,23 @@ import javafx.scene.shape.ArcType;
 import ru.ruslan.spring.cad.Interfaces.Drawable;
 import ru.ruslan.spring.cad.Interfaces.Movable;
 import ru.ruslan.spring.cad.Interfaces.Selectable;
+import ru.ruslan.spring.cad.Interfaces.Stylized;
 import ru.ruslan.spring.cad.Interfaces.Zoomable;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyArc extends Figure implements Movable, Zoomable, Selectable, Drawable {
+public class MyArc extends Figure implements Movable, Zoomable, Selectable, Drawable, Stylized {
     private Arc arc;
     private Point2D startPoint;
     private Point2D endPoint;
     private Point2D center;
 
     double realRadius;
+    private double realArcLength; // Реальная длина дуги в градусах
 
+    private double width;
 
     public MyArc(double x1, double y1, double x2, double y2, double centerX, double centerY) {
         super();
@@ -52,6 +55,7 @@ public class MyArc extends Figure implements Movable, Zoomable, Selectable, Draw
         }
 
         double length = endAngle - startAngle;
+        this.realArcLength = length; // Сохраняем реальную длину дуги
 
         System.out.println("LENGTH" + length);
         arc = new Arc(centerX, centerY, realRadius, realRadius, -startAngle, -length);
@@ -101,6 +105,7 @@ public class MyArc extends Figure implements Movable, Zoomable, Selectable, Draw
         arc.setStroke(Color.BLACK);
         arc.setStrokeWidth(2);
 
+        this.realArcLength = theta; // Сохраняем реальную длину дуги
         this.getChildren().addAll(startPoint, endPoint, arc, center);
     }
 
@@ -152,7 +157,9 @@ public class MyArc extends Figure implements Movable, Zoomable, Selectable, Draw
         arc.setStroke(Color.BLACK);
         arc.setStrokeWidth(2);
 
+        this.realArcLength = Math.abs(theta); // Сохраняем реальную длину дуги (по модулю)
         this.getChildren().addAll(startPoint, endPoint, arc, center);
+        realRadius = radius;
     }
     // Нормализация углов в диапазон [0, 360)
     private double normalizeAngle(double angle) {
@@ -172,6 +179,15 @@ public class MyArc extends Figure implements Movable, Zoomable, Selectable, Draw
             this.realRadius = radius;
         }
     }
+    
+    public double getRealArcLength() {
+        return realArcLength;
+    }
+    
+    public void setRealArcLength(double realArcLength) {
+        this.realArcLength = realArcLength;
+    }
+    
     @Override
     public List<Double> getRealCoordinates() {
         return coordinates;
@@ -182,10 +198,17 @@ public class MyArc extends Figure implements Movable, Zoomable, Selectable, Draw
         coord.add(arc.getCenterY());
         coord.add(startPoint.getCenterX());
         coord.add(startPoint.getCenterY());
-        coord.add(endPoint.getCenterY());
+        coord.add(endPoint.getCenterX());
         coord.add(endPoint.getCenterY());
         return coord;
+    }
 
+    public double getRealRadius() {
+        return realRadius;
+    }
+
+    public javafx.scene.shape.Arc getArc() {
+        return arc;
     }
 
     @Override
@@ -217,6 +240,7 @@ public class MyArc extends Figure implements Movable, Zoomable, Selectable, Draw
 
     @Override
     public Figure select() {
+        highlight();
         return this;
     }
 
@@ -232,45 +256,43 @@ public class MyArc extends Figure implements Movable, Zoomable, Selectable, Draw
 
     @Override
     public boolean isNear(double x, double y) {
-        // Координаты центра дуги
         double centerX = arc.getCenterX();
         double centerY = arc.getCenterY();
-
-        // Радиус дуги
-        double radius = arc.getRadiusX(); // радиус X и Y должны быть равны для корректной проверки
-
-        // Минимальное расстояние для близости
-        double tolerance = 5.0; // допустимое отклонение в пикселях
-
-        // Расстояние от точки до центра дуги
-        double distanceToCenter = CoordSystem.distance(x, y, centerX, centerY);
-
-        // Проверка на соответствие радиусу
-        if (Math.abs(distanceToCenter - radius) <= tolerance) {
-            // Угол точки относительно центра дуги
-            double angleToPoint = Math.toDegrees(Math.atan2(-(y - centerY), x - centerX));
-            angleToPoint = normalizeAngle(angleToPoint);
-
-            // Угол начала и конца дуги
+        double radius = arc.getRadiusX();
+        
+        // Расстояние от точки до центра
+        double distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+        
+        // Проверяем, находится ли точка рядом с дугой
+        if (Math.abs(distance - radius) < 5) {
+            // Находим угол точки относительно центра
+            double angle = Math.toDegrees(Math.atan2(-(y - centerY), x - centerX));
+            
+            // Нормализуем угол
+            angle = normalizeAngle(angle);
+            
+            // Получаем параметры дуги
             double startAngle = arc.getStartAngle();
-            double endAngle = startAngle + arc.getLength();
-
-
-            if (endAngle < startAngle) {
-                // Дуга проходит через 0 градусов
-                return (angleToPoint <= startAngle && angleToPoint >= endAngle);
+            double length = arc.getLength();
+            
+            // Проверяем, находится ли точка в пределах дуги
+            if (length > 0) {
+                double endAngle = normalizeAngle(startAngle + length);
+                return (angle >= startAngle && angle <= endAngle) ||
+                       (endAngle < startAngle && (angle >= startAngle || angle <= endAngle));
             } else {
-                return (angleToPoint >= startAngle && angleToPoint <= endAngle);
+                double endAngle = normalizeAngle(startAngle + length);
+                return (angle <= startAngle && angle >= endAngle) ||
+                       (endAngle > startAngle && (angle <= startAngle || angle >= endAngle));
             }
         }
-
-        // Если ни одна проверка не выполнена, точка не рядом с дугой
+        
         return false;
     }
 
     @Override
     public void deSelect() {
-
+        deHighlight();
     }
 
     @Override
@@ -292,5 +314,31 @@ public class MyArc extends Figure implements Movable, Zoomable, Selectable, Draw
         arc.setCenterY(newY);
         arc.setRadiusX(arc.getRadiusX()*delta);
         arc.setRadiusY(arc.getRadiusY()*delta);
+    }
+
+    @Override
+    public void setupStyle(double width, List<Double> dashes, Double scale) {
+        this.width = width;
+        arc.setStrokeWidth(width);
+        
+        arc.getStrokeDashArray().clear();
+        if (dashes != null) {
+            List<Double> newList = new ArrayList<>();
+            for (Double dash : dashes) {
+                newList.add(dash * scale);
+            }
+            arc.getStrokeDashArray().addAll(newList);
+        }
+    }
+
+    @Override
+    public void updateStyle(double scale) {
+        List<Double> list = arc.getStrokeDashArray();
+        List<Double> newList = new ArrayList<>();
+        for (Double aDouble : list) {
+            newList.add(aDouble * scale);
+        }
+        arc.getStrokeDashArray().clear();
+        arc.getStrokeDashArray().addAll(newList);
     }
 }

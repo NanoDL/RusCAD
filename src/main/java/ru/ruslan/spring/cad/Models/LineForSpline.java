@@ -168,6 +168,22 @@ public class LineForSpline extends Figure implements Zoomable, Movable, Drawable
         line.setEndY(x);
     }
 
+    public double getStartX() {
+        return line.getStartX();
+    }
+
+    public double getStartY() {
+        return line.getStartY();
+    }
+
+    public double getEndX() {
+        return line.getEndX();
+    }
+
+    public double getEndY() {
+        return line.getEndY();
+    }
+
     @Override
     public void rotate(double x, double y, double angle) {
 

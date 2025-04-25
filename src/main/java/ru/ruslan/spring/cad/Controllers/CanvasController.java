@@ -86,76 +86,44 @@ public class CanvasController {
 
     }
 
-    public Label getModeLabel() {
-        return modeLabel;
+    public CoordService getCoordService(){
+        return coordService;
+    }
+
+    public Pane getCanvas() {
+        return canvas;
     }
 
     public void setModeLabel(Label modeLabel) {
         this.modeLabel = modeLabel;
     }
 
-    public StyleMenuContrl getStyleMenuContrl() {
-        return styleMenuContrl;
-    }
-
     public void setStyleMenuContrl(StyleMenuContrl styleMenuContrl) {
         this.styleMenuContrl = styleMenuContrl;
-    }
-
-    public Mode getMode() {
-        return mode;
     }
 
     public void setMode(Mode mode) {
         this.mode = mode;
     }
 
-    public Label getCoordX() {
-        return coordX;
-    }
-
     public void setCoordX(Label coordX) {
         this.coordX = coordX;
-    }
-
-    public Label getCoordY() {
-        return coordY;
     }
 
     public void setCoordY(Label coordY) {
         this.coordY = coordY;
     }
 
-    public Label getScrCoordX() {
-        return scrCoordX;
-    }
-
     public void setScrCoordX(Label scrCoordX) {
         this.scrCoordX = scrCoordX;
-    }
-
-    public Label getScrCoordY() {
-        return scrCoordY;
     }
 
     public void setScrCoordY(Label scrCoordY) {
         this.scrCoordY = scrCoordY;
     }
 
-    public Label getScaleLabel() {
-        return scaleLabel;
-    }
-
     public void setScaleLabel(Label scaleLabel) {
         this.scaleLabel = scaleLabel;
-    }
-
-    public CoordSystem getCoordSystem() {
-        return coordSystem;
-    }
-
-    public Label getCoordModeLabel() {
-        return coordModeLabel;
     }
 
     public void setCoordModeLabel(Label coordModeLabel) {
@@ -173,7 +141,6 @@ public class CanvasController {
         scaleLabel.setText(String.format("%.2f", scale));
         coordModeLabel.setText(String.valueOf(coordSystem.getCoordMode()));
         modeLabel.setText(String.valueOf(mode));
-        //System.out.println(scale);
     }
 
     public void initialize() {
@@ -259,9 +226,7 @@ public class CanvasController {
                     for (Node addedNode : change.getAddedSubList()) {
                         if (addedNode instanceof Stylized) {
                             // Если добавленный объект - линия, добавляем в массив тонких линий
-                            styleMenuContrl.addObjectToStyle("Основная тонкая", (Stylized)addedNode);
-
-                            System.out.println("Добавлена новая линия!");
+                            styleMenuContrl.addObjectToStyle("Основная тонкая", (Stylized) addedNode);
                         }
                     }
                 }
@@ -283,12 +248,6 @@ public class CanvasController {
         popup.setDefaultCoord(coord[0], coord[1]);
         popup.show(canvas, mouseEvent.getScreenX() + 20, mouseEvent.getScreenY() + 20);
         canvas.requestFocus();
-    }
-
-    public void hidePopup() {
-        if (popup.isShowing()) {
-            popup.hide();
-        }
     }
 
     private void createShapeByMouse(MouseEvent mouseEvent) {
@@ -455,9 +414,13 @@ public class CanvasController {
 
     private void createPolygon(List<Double> coordinates, double linesCount) {
         if (linesCount >= 3) {
+
             List<Double> screenCoord = coordSystem.translateRealToScreen(coordinates);
             Polygon poly = new Polygon(screenCoord, linesCount, mode);
-            poly.setRealCoordinates(coordinates);
+            coordService.updateFigureRealCoord(poly);
+            System.out.println(
+                    "Создание многоугольника с координатами: " + poly.getRealCoordinates() + " и количеством сторон: " + linesCount
+            );
             poly.draw(canvas);
         } else {
             System.out.println("Не то число сторон!");
@@ -470,7 +433,7 @@ public class CanvasController {
         if (linesCount >= 3 && radius > 0.0) {
             List<Double> screenCoord = coordSystem.translateRealToScreen(coordinates);
             Polygon poly = new Polygon(screenCoord, radius * scale, linesCount, mode);
-            poly.setRealCoordinates(coordinates);
+            coordService.updateFigureRealCoord(poly);
             poly.setRadius(radius);
             poly.draw(canvas);
         } else {
@@ -482,6 +445,7 @@ public class CanvasController {
 
     private void createArc(List<Double> coordinates, Mode mode) {
         List<Double> screenCoord = coordSystem.translateRealToScreen(coordinates);
+
         MyArc arc = null;
         switch (mode) {
             case DRAW_ARC3DOTS -> {
@@ -495,6 +459,7 @@ public class CanvasController {
                 double y2 = screenCoord.get(3);
                 double centerX = screenCoord.get(4);
                 double centerY = screenCoord.get(5);
+
 
                 arc = new MyArc(x1, y1, x2, y2, centerX, centerY);
             }
@@ -580,7 +545,6 @@ public class CanvasController {
 
             firstX = coord[0];
             firstY = coord[1];
-
 
 
             coord = coordSystem.translateRealToScreen(secondX, secondY, scale);
@@ -962,21 +926,6 @@ public class CanvasController {
         coordinates.addAll(List.of(coord[0], coord[1]));
     }
 
-    private void setDrawCircle3DotsHandler() {
-        canvas.setOnMouseMoved(withLablesUpdate(showPopupHandler));
-        canvas.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                getCoordFromMouse(mouseEvent);
-                if (coordinates.size() == 6) {
-                    createCircle3Dots(coordinates);
-                    coordinates.clear();
-                }
-            }
-        });
-        canvas.setOnKeyPressed(createShapeByPopup);
-    }
-
     private void setDivideHandler() {
         canvas.setOnMouseMoved(withLablesUpdate(highlightHandler));
         canvas.setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -1097,7 +1046,7 @@ public class CanvasController {
                 if (((Selectable) node).isNear(mouseX, mouseY)) {
                     controlPanelController.updateControlPanel((Selectable) node, mouseEvent);
                     Figure fig = ((Selectable) node).select();
-                    if (!selected.contains(fig)){
+                    if (!selected.contains(fig)) {
                         selected.add(fig);
                     }
                     found = true;
@@ -1114,7 +1063,7 @@ public class CanvasController {
 
     private void deSelect(KeyEvent keyEvent) {
         System.out.println("AAAAA");
-        if (keyEvent.getCode() == KeyCode.ESCAPE){
+        if (keyEvent.getCode() == KeyCode.ESCAPE) {
             System.out.println("BBBBB");
             for (Node node : canvas.getChildren()) {
                 if (node instanceof Selectable) {
@@ -1179,15 +1128,71 @@ public class CanvasController {
         return selected;
     }
 
-    public void setSelected(List<Figure> selected) {
-        this.selected = selected;
-    }
-
     public double getScale() {
         return scale;
     }
 
-    public void setScale(double scale) {
-        this.scale = scale;
+    public void clearCanvas() {
+        // Сохраняем координатную систему и другие важные элементы
+        CoordSystem savedCoordSystem = null;
+        Group savedTempPoints = tempPoints;
+        
+        // Создаем список объектов, которые нужно сохранить
+        List<Node> nodesToPreserve = new ArrayList<>();
+        
+        // Находим координатную систему
+        for (Node node : canvas.getChildren()) {
+            if (node instanceof CoordSystem) {
+                savedCoordSystem = (CoordSystem) node;
+                nodesToPreserve.add(node);
+            }
+        }
+        
+        // Очищаем список выделенных объектов
+        selected.clear();
+        
+        // Удаляем только фигуры, сохраняя координатную систему и другие служебные элементы
+        List<Node> nodesToRemove = new ArrayList<>();
+        for (Node node : canvas.getChildren()) {
+            if (node instanceof Figure) {
+                nodesToRemove.add(node);
+            }
+        }
+        
+        // Удаляем отмеченные для удаления узлы
+        canvas.getChildren().removeAll(nodesToRemove);
+        
+        // Если координатной системы не было, создаем новую
+        if (savedCoordSystem == null) {
+            setCoordSystem();
+        }
+        
+        // Убеждаемся, что группа временных точек присутствует
+        if (!canvas.getChildren().contains(tempPoints)) {
+            canvas.getChildren().add(tempPoints);
+        }
+        
+        // Сбрасываем временные объекты
+        currentMyLine = null;
+        currentMyCircle = null;
+        currentRect = null;
+        currentMySpline = null;
+        
+        // Обновляем метки с текущими координатами и режимом
+        updateAllLabels();
     }
+    
+    private void updateAllLabels() {
+        // Обновляем все метки, используя текущие значения
+        if (scaleLabel != null) {
+            scaleLabel.setText(String.format("%.2f", scale));
+        }
+        if (coordModeLabel != null) {
+            coordModeLabel.setText(String.valueOf(coordSystem.getCoordMode()));
+        }
+        if (modeLabel != null) {
+            modeLabel.setText(String.valueOf(mode));
+        }
+    }
+
 }

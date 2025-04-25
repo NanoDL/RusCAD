@@ -43,9 +43,17 @@ public class StyleMenuContrl {
         this.canvasController = canvasController;
     }
 
+    /**
+     * Возвращает карту объектов со стилями
+     * @return Map с ключами - именами стилей и значениями - списками объектов с таким стилем
+     */
+    public Map<String, List<Stylized>> getObjects() {
+        return objects;
+    }
+
     public void addObjectToStyle(String styleName, Stylized object) {
         objects.computeIfAbsent(styleName, k -> new ArrayList<>()).add(object);
-        System.out.println(objects);
+        System.out.println("Стилизованные объекты" + objects);
     }
     public void changeObjectStyle(){
         List<Figure> figures = canvasController.getSelected();
@@ -70,6 +78,7 @@ public class StyleMenuContrl {
     }
     public void updateStyleOnZoom(Double scale){
 
+        System.out.println("Обновление при зуме");
         for (String key : objects.keySet()){
             List<Stylized> objs = objects.get(key);
             for (Stylized obj : objs){

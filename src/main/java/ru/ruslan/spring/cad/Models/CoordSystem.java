@@ -163,8 +163,8 @@ public class CoordSystem extends Group implements Movable, Zoomable {
         for (int i = 0; i<coordinates.size()-1; i+=2 ){
             double screenX = originX + coordinates.get(i)*scale;
             double screenY = originY - coordinates.get(i+1)*scale;
-            System.out.println(coordinates.get(i));
-            System.out.println(coordinates.get(i+1));
+            //System.out.println(coordinates.get(i));
+            //.out.println(coordinates.get(i+1));
             newCoord.add(screenX);
             newCoord.add(screenY);
 
