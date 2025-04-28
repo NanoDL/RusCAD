@@ -1,6 +1,7 @@
 package ru.ruslan.spring.cad.Savers;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +23,16 @@ import ru.ruslan.spring.cad.Models.MyCircle;
 import ru.ruslan.spring.cad.Models.MyLine;
 import ru.ruslan.spring.cad.Interfaces.Stylized;
 import ru.ruslan.spring.cad.Services.CoordService;
+import ru.ruslan.spring.cad.Controllers.CanvasController;
 
 public class AsposeDXFImporter {
+
+    private Pane targetPane;
+    private CoordService coordService;
+    private StyleMenuContrl styleMenuContrl;
+    private CanvasController canvasController;
+    
+
 
     /**
      * Импортирует объекты из DXF-файла
@@ -36,6 +45,9 @@ public class AsposeDXFImporter {
     public static boolean importFromDXF(String filePath, Pane targetPane, 
                                      CoordService coordService, StyleMenuContrl styleMenuContrl) {
         try {
+            // Установка флага импорта, чтобы отключить автоматическое добавление стилей
+            coordService.getCanvasController().setImportingDXF(true);
+            
             // Загружаем DXF файл
             CadImage cadImage = (CadImage)Image.load(filePath);
             System.out.println("Файл DXF загружен: " + filePath);
@@ -51,6 +63,9 @@ public class AsposeDXFImporter {
             System.err.println("Ошибка при импорте DXF файла: " + e.getMessage());
             e.printStackTrace();
             return false;
+        } finally {
+            // В любом случае сбрасываем флаг импорта
+            coordService.getCanvasController().setImportingDXF(false);
         }
     }
     
@@ -61,10 +76,10 @@ public class AsposeDXFImporter {
                                      CoordService coordService, StyleMenuContrl styleMenuContrl) {
         if (entity instanceof CadLine) {
             processLine((CadLine)entity, targetPane, coordService, styleMenuContrl);
-        } else if (entity instanceof CadCircle) {
-            //  processCircle((CadCircle)entity, targetPane, coordService, styleMenuContrl);
         } else if (entity instanceof CadArc) {
-            //processArc((CadArc)entity, targetPane, coordService, styleMenuContrl);
+            processArc((CadArc)entity, targetPane, coordService, styleMenuContrl);
+        }else if (entity instanceof CadCircle) {
+              processCircle((CadCircle)entity, targetPane, coordService, styleMenuContrl);
         }
         // Если требуется поддержка других типов сущностей (полилинии, тексты и т.д.), 
         // добавьте их обработку здесь
@@ -125,26 +140,20 @@ public class AsposeDXFImporter {
             List<Double> dashPattern = null;
             
             // Устанавливаем шаблон штрихов в зависимости от типа линии
-            switch (lineTypeName.toUpperCase()) {
-                case "DASHED":
-                case "DASH":
-                case "DASHDASH":
-                    dashPattern = List.of(5.0, 5.0);
-                    break;
-                case "DASHDOT":
-                    dashPattern = List.of(5.0, 2.0, 1.0, 2.0);
-                    break;
-                case "DASHDOTDOT":
-                    dashPattern = List.of(5.0, 2.0, 1.0, 2.0, 1.0, 2.0);
-                    break;
-                case "DOTTED":
-                case "DOT":
-                    dashPattern = List.of(1.0, 2.0);
-                    break;
-                case "CONTINUOUS":
-                default:
-                    dashPattern = null;
-                    break;
+            String upperLineType = lineTypeName.toUpperCase();
+            if (upperLineType.equals("DASHED") || upperLineType.equals("DASH") || upperLineType.equals("DASHDASH")) {
+                dashPattern = List.of(5.0, 5.0);
+            } else if (upperLineType.equals("DASHDOT")) {
+                dashPattern = List.of(5.0, 2.0, 1.0, 2.0);
+            } else if (upperLineType.equals("DASHDOTDOT")) {
+                dashPattern = List.of(5.0, 2.0, 1.0, 2.0, 1.0, 2.0);
+            } else if (upperLineType.equals("DOTTED") || upperLineType.equals("DOT")) {
+                dashPattern = List.of(1.0, 2.0);
+            } else if (upperLineType.equals("CONTINUOUS")) {
+                dashPattern = null;
+            } else {
+                // По умолчанию
+                dashPattern = null;
             }
             
             // Применяем стиль напрямую к линии
@@ -199,26 +208,20 @@ public class AsposeDXFImporter {
         List<Double> dashPattern = null;
         
         // Устанавливаем шаблон штрихов в зависимости от типа линии
-        switch (lineTypeName.toUpperCase()) {
-            case "DASHED":
-            case "DASH":
-            case "DASHDASH":
-                dashPattern = List.of(5.0, 5.0);
-                break;
-            case "DASHDOT":
-                dashPattern = List.of(5.0, 2.0, 1.0, 2.0);
-                break;
-            case "DASHDOTDOT":
-                dashPattern = List.of(5.0, 2.0, 1.0, 2.0, 1.0, 2.0);
-                break;
-            case "DOTTED":
-            case "DOT":
-                dashPattern = List.of(1.0, 2.0);
-                break;
-            case "CONTINUOUS":
-            default:
-                dashPattern = null;
-                break;
+        String upperLineType = lineTypeName.toUpperCase();
+        if (upperLineType.equals("DASHED") || upperLineType.equals("DASH") || upperLineType.equals("DASHDASH")) {
+            dashPattern = List.of(5.0, 5.0);
+        } else if (upperLineType.equals("DASHDOT")) {
+            dashPattern = List.of(5.0, 2.0, 1.0, 2.0);
+        } else if (upperLineType.equals("DASHDOTDOT")) {
+            dashPattern = List.of(5.0, 2.0, 1.0, 2.0, 1.0, 2.0);
+        } else if (upperLineType.equals("DOTTED") || upperLineType.equals("DOT")) {
+            dashPattern = List.of(1.0, 2.0);
+        } else if (upperLineType.equals("CONTINUOUS")) {
+            dashPattern = null;
+        } else {
+            // По умолчанию
+            dashPattern = null;
         }
         
         // Применяем стиль напрямую к окружности
@@ -234,11 +237,22 @@ public class AsposeDXFImporter {
         double centerX = arc.getCenterPoint().getX();
         double centerY = arc.getCenterPoint().getY();
         double radius = arc.getRadius();
-        double startAngle = Math.toDegrees(arc.getStartAngle());
-        double endAngle = Math.toDegrees(arc.getEndAngle());
         
         // В DXF ось Y направлена вверх, в JavaFX - вниз
         double realCenterY = -centerY;
+        
+        // Получаем углы из DXF (в радианах) и конвертируем в градусы
+        double startAngle = Math.toDegrees(arc.getStartAngle());
+        double endAngle = Math.toDegrees(arc.getEndAngle());
+        
+        System.out.println("Исходные углы дуги из DXF: " + startAngle + " - " + endAngle);
+        
+        // Поворачиваем против часовой стрелки на 90 градусов
+        // Применяем поворот к начальному и конечному углам
+        startAngle = (startAngle - 90) % 360;
+        endAngle = (endAngle - 90) % 360;
+        
+        System.out.println("Углы после поворота на 90 градусов: " + startAngle + " - " + endAngle);
         
         // Вычисляем координаты начальной и конечной точек дуги
         double startX = centerX + radius * Math.cos(Math.toRadians(startAngle));
@@ -250,15 +264,6 @@ public class AsposeDXFImporter {
         double realStartY = -startY;
         double realEndY = -endY;
         
-        System.out.println("Создаю дугу: центр (" + centerX + "," + realCenterY + "), радиус " + radius + 
-                           ", углы: " + startAngle + " - " + endAngle);
-        
-        // Вычисляем длину дуги в градусах
-        double arcLength = endAngle - startAngle;
-        if (arcLength < 0) {
-            arcLength += 360;
-        }
-        
         // Преобразуем координаты центра и точек в экранные
         double screenCenterX = coordService.toScreenX(centerX);
         double screenCenterY = coordService.toScreenY(centerY);
@@ -266,14 +271,23 @@ public class AsposeDXFImporter {
         double screenStartY = coordService.toScreenY(startY);
         double screenEndX = coordService.toScreenX(endX);
         double screenEndY = coordService.toScreenY(endY);
-        double screenRadius = coordService.toScreenLength(radius);
         
         // Создаем дугу, используя экранные координаты
+        // И меняем порядок точек для корректного отображения
         MyArc myArc = new MyArc(
-            screenStartX, screenStartY,
             screenEndX, screenEndY,
+            screenStartX, screenStartY,
             screenCenterX, screenCenterY
         );
+        
+        // Вычисляем длину дуги в градусах
+        double arcLength = endAngle - startAngle;
+        if (arcLength < 0) {
+            arcLength += 360;
+        }
+        
+        System.out.println("Создаем дугу: центр (" + centerX + "," + realCenterY + 
+                          "), радиус " + radius + ", длина дуги: " + arcLength);
         
         // Устанавливаем радиус и длину дуги
         myArc.setRealRadius(radius);
@@ -282,11 +296,11 @@ public class AsposeDXFImporter {
         // Сохраняем реальные координаты
         List<Double> realCoordinates = new ArrayList<>();
         realCoordinates.add(centerX);
-        realCoordinates.add(realCenterY);
+        realCoordinates.add(-realCenterY);
+        realCoordinates.add(endX);      // Меняем порядок точек
+        realCoordinates.add(-realEndY);
         realCoordinates.add(startX);
-        realCoordinates.add(realStartY);
-        realCoordinates.add(endX);
-        realCoordinates.add(realEndY);
+        realCoordinates.add(-realStartY);
         myArc.setRealCoordinates(realCoordinates);
         
         // Устанавливаем цвет
@@ -295,43 +309,52 @@ public class AsposeDXFImporter {
         // Добавляем на холст
         myArc.draw(targetPane);
         
-        // Определяем тип линии
+        // Настройка стиля
         double lineWeight = arc.getLineWeight() > 0 ? arc.getLineWeight() / 100.0 : 1.0;
         String lineTypeName = arc.getLineTypeName() != null ? arc.getLineTypeName() : "CONTINUOUS";
         String styleName = getStyleNameByLineType(lineTypeName);
         
-        // Добавляем дугу в соответствующий стиль
-        styleMenuContrl.addObjectToStyle(styleName, myArc);
-        
-        // Принудительно обновляем стили для правильного отображения
-        double scale = coordService.getCoordSystem().getScale();
+        // Определяем шаблон штрихов в зависимости от типа линии
+        String upperLineType = lineTypeName.toUpperCase();
         List<Double> dashPattern = null;
         
-        // Устанавливаем шаблон штрихов в зависимости от типа линии
-        switch (lineTypeName.toUpperCase()) {
-            case "DASHED":
-            case "DASH":
-            case "DASHDASH":
-                dashPattern = List.of(5.0, 5.0);
-                break;
-            case "DASHDOT":
-                dashPattern = List.of(5.0, 2.0, 1.0, 2.0);
-                break;
-            case "DASHDOTDOT":
-                dashPattern = List.of(5.0, 2.0, 1.0, 2.0, 1.0, 2.0);
-                break;
-            case "DOTTED":
-            case "DOT":
-                dashPattern = List.of(1.0, 2.0);
-                break;
-            case "CONTINUOUS":
-            default:
-                dashPattern = null;
-                break;
+        if (upperLineType.equals("DASHED") || upperLineType.equals("DASH") || upperLineType.equals("DASHDASH")) {
+            dashPattern = List.of(5.0, 5.0);
+        } else if (upperLineType.equals("DASHDOT")) {
+            dashPattern = List.of(5.0, 2.0, 1.0, 2.0);
+        } else if (upperLineType.equals("DASHDOTDOT")) {
+            dashPattern = List.of(5.0, 2.0, 1.0, 2.0, 1.0, 2.0);
+        } else if (upperLineType.equals("DOTTED") || upperLineType.equals("DOT")) {
+            dashPattern = List.of(1.0, 2.0);
         }
         
-        // Применяем стиль напрямую к дуге
-        myArc.setupStyle(lineWeight, dashPattern, scale);
+        // Применяем стиль к дуге
+        myArc.setupStyle(lineWeight, dashPattern, coordService.getCoordSystem().getScale());
+        
+        // Добавляем дугу в соответствующий стиль
+        styleMenuContrl.addObjectToStyle(styleName, myArc);
+    }
+    
+    /**
+     * Возвращает шаблон штрихов по имени типа линии
+     */
+    private static List<Double> getDashPatternByLineType(String lineTypeName) {
+        if (lineTypeName == null) {
+            return null;
+        }
+        
+        String upperLineType = lineTypeName.toUpperCase();
+        if (upperLineType.equals("DASHED") || upperLineType.equals("DASH") || upperLineType.equals("DASHDASH")) {
+            return List.of(5.0, 5.0);
+        } else if (upperLineType.equals("DASHDOT")) {
+            return List.of(5.0, 2.0, 1.0, 2.0);
+        } else if (upperLineType.equals("DASHDOTDOT")) {
+            return List.of(5.0, 2.0, 1.0, 2.0, 1.0, 2.0);
+        } else if (upperLineType.equals("DOTTED") || upperLineType.equals("DOT")) {
+            return List.of(1.0, 2.0);
+        } else {
+            return null; // CONTINUOUS или другие
+        }
     }
     
     /**
@@ -361,21 +384,17 @@ public class AsposeDXFImporter {
             return "Основная тонкая";
         }
         
-        switch (lineTypeName.toUpperCase()) {
-            case "DASHED":
-            case "DASH":
-            case "DASHDASH":
-                return "Штриховая";
-            case "DASHDOT":
-                return "Штрих-пунктирная";
-            case "DASHDOTDOT":
-                return "Штрих-пунктирная с двумя точками";
-            case "DOTTED":
-            case "DOT":
-                return "Основная тонкая";
-            case "CONTINUOUS":
-            default:
-                return "Основная тонкая";
+        String upperLineType = lineTypeName.toUpperCase();
+        if (upperLineType.equals("DASHED") || upperLineType.equals("DASH") || upperLineType.equals("DASHDASH")) {
+            return "Штриховая";
+        } else if (upperLineType.equals("DASHDOT")) {
+            return "Штрих-пунктирная";
+        } else if (upperLineType.equals("DASHDOTDOT")) {
+            return "Штрих-пунктирная с двумя точками";
+        } else if (upperLineType.equals("CONTINUOUS")) {
+            return "Основная тонкая";
+        } else {
+            return "Основная тонкая";
         }
     }
 }

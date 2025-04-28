@@ -20,7 +20,6 @@ public class StyleMenuContrl {
 
     Map<String, List<Stylized>> objects = new HashMap<>();
 
-
     public StyleMenuContrl(Pane canvas) {
         menu = new StyleMenu();
         menu.setAutoHide(true);

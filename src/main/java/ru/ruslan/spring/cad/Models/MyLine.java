@@ -220,7 +220,10 @@ public class MyLine extends Figure implements Zoomable, Movable, Drawable, Selec
     @Override
     public void updateStyle(double scale) {
         List<Double> list = line.getStrokeDashArray();
-        System.out.println("Массив штрихов "+ list);
+        if (!list.isEmpty()){
+            System.out.println(this + "Массив штрихов "+ list );
+        }
+
         List<Double> newList = new ArrayList<>();
         for (Double aDouble : list) {
             newList.add(aDouble * scale);

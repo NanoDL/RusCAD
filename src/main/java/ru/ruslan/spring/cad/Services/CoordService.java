@@ -2,12 +2,14 @@ package ru.ruslan.spring.cad.Services;
 
 import javafx.scene.Group;
 import ru.ruslan.spring.cad.Models.*;
+import ru.ruslan.spring.cad.Controllers.CanvasController;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CoordService {
     private CoordSystem coordSystem;
+    private CanvasController canvasController;
 
     public CoordService(CoordSystem coordSystem) {
         this.coordSystem = coordSystem;
@@ -19,6 +21,14 @@ public class CoordService {
 
     public void setCoordSystem(CoordSystem coordSystem) {
         this.coordSystem = coordSystem;
+    }
+    
+    public CanvasController getCanvasController() {
+        return canvasController;
+    }
+    
+    public void setCanvasController(CanvasController canvasController) {
+        this.canvasController = canvasController;
     }
 
     /**

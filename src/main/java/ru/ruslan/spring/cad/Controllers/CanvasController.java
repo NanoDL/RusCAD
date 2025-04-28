@@ -16,6 +16,7 @@ import ru.ruslan.spring.cad.Services.CoordService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 public class CanvasController {
@@ -77,13 +78,13 @@ public class CanvasController {
     //private EventHandler<MouseEvent> createCircle3DotsHandler;
     private EventHandler<MouseEvent> createRectangleHandler;
 
+    private boolean isImportingDXF = false; // Флаг, указывающий на процесс импорта DXF
 
     public CanvasController(Pane canvas) {
         this.canvas = canvas;
         canvas.setFocusTraversable(true);
         popup = new MyPopup();
         popup.setAutoHide(true);
-
     }
 
     public CoordService getCoordService(){
@@ -183,6 +184,7 @@ public class CanvasController {
                             setCoordSystem(); // Устанавливаем координатную систему только после отображения окна
                             canvas.getChildren().add(tempPoints);
                             coordService = new CoordService(coordSystem);
+                            coordService.setCanvasController(this); // Устанавливаем ссылку на контроллер
                         });
                     }
                 });
@@ -220,12 +222,15 @@ public class CanvasController {
 
         // Добавляем слушатель на изменения в списке детей canvas
         canvas.getChildren().addListener((ListChangeListener<Node>) change -> {
+            // Если идет импорт DXF, не добавляем объекты в стиль автоматически
+            if (isImportingDXF) return;
+            
             while (change.next()) {
                 if (change.wasAdded()) {
                     // Проходим по всем добавленным объектам
                     for (Node addedNode : change.getAddedSubList()) {
                         if (addedNode instanceof Stylized) {
-                            // Если добавленный объект - линия, добавляем в массив тонких линий
+                            // Если добавленный объект реализует Stylized, добавляем в массив тонких линий
                             styleMenuContrl.addObjectToStyle("Основная тонкая", (Stylized) addedNode);
                         }
                     }
@@ -1193,6 +1198,11 @@ public class CanvasController {
         if (modeLabel != null) {
             modeLabel.setText(String.valueOf(mode));
         }
+    }
+
+    // Метод для установки/сброса флага импорта DXF
+    public void setImportingDXF(boolean importing) {
+        this.isImportingDXF = importing;
     }
 
 }
